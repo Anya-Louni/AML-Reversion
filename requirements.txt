@@ -16,3 +16,10 @@ tabulate
 matplotlib
 seaborn
 pytest
+harmonypy==0.0.10
+palantir==1.4.5
+phate==2.0.0
+igraph
+leidenalg
+scikit-misc
+joblib

@@ -9,7 +9,7 @@ import numpy as np
 
 from pipeline.common import load_config
 
-PHASES = {0: "pipeline.phase0_data.run"}
+PHASES = {0: "pipeline.phase0_data.run", 1: "pipeline.phase1_landscape.run"}
 
 
 def main() -> None:

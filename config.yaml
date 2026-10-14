@@ -49,3 +49,32 @@ lincs:
   max_sigs_per_drug_cell: 6
   # For drugs without any myeloid signature, the core non-myeloid lines to use.
   fallback_cell_lines: [MCF7, PC3, A549, A375, HT29, HA1E, VCAP, HEPG2]
+
+phase1:
+  # Normal myeloid reference: van Galen cells called normal by the authors.
+  cell_types: [HSC, Prog, GMP, ProMono, Mono, cDC]
+  # Ordered main lineage used to check pseudotime and to build the maturation signature.
+  lineage_order: [HSC, Prog, GMP, ProMono, Mono]
+  include_aml_normal_cells: true
+  qc: {min_genes: 200, max_pct_mt: 20, min_cells_per_gene: 10}
+  n_hvg: 2000
+  n_pcs: 30
+  harmony_batch: sample
+  min_batch_cells: 50         # smaller samples are pooled into one batch
+  n_neighbors: 30
+  n_root_candidates: 10       # root sensitivity: top-N HSC cells by the authors' Score_HSC
+  palantir_waypoints: 1200
+  score_clip_quantiles: [0.01, 0.99]
+  landscape:
+    grid: 160
+    margin: 0.08
+    bandwidth: 0.035           # fraction of embedding range
+    weight_pseudotime: 0.75    # rest goes to -log density
+  mapping: {k: 15, test_fraction: 0.2}
+  signature_top_n: 200
+  # Ribosomal-protein and mitochondrial genes are excluded from the primary signature: they track growth/size,
+  # so a signature full of them would reward any antiproliferative drug. The full signature is kept as a variant.
+  signature_exclude_regex: "^(RPL|RPS|MRPL|MRPS|MT-)"
+  markers:
+    stem: [CD34, PROM1]
+    mature: [CD14, LYZ, CSF1R]

@@ -12,7 +12,7 @@ patient cells toward maturity, and validates the rankings against ex vivo drug r
 | Phase | Content | Status |
 |---|---|---|
 | 0 | Data acquisition and audit | done, see [reports/phase0_data_report.md](reports/phase0_data_report.md) |
-| 1 | Normal differentiation landscape | in progress |
+| 1 | Normal differentiation landscape | done, see [reports/phase1_landscape_report.md](reports/phase1_landscape_report.md) |
 | 2-7 | Patient placement, drug ranking, validation, simulation export, web app, packaging | planned |
 
 ## Data sources
@@ -29,7 +29,7 @@ Raw and processed data are not stored in this repository; the pipeline downloads
 ```bash
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt   # .venv/bin/python on Linux/macOS
-make phase0      # or: python -m pipeline.run --phase 0
+make all        # or: python -m pipeline.run --phase 0, then --phase 1
 make test
 ```
 
