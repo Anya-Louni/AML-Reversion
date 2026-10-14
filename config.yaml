@@ -78,3 +78,42 @@ phase1:
   markers:
     stem: [CD34, PROM1]
     mature: [CD14, LYZ, CSF1R]
+
+phase2:
+  malignant_like_types: [HSC-like, Prog-like, GMP-like, ProMono-like, Mono-like, cDC-like]
+  like_order: [HSC-like, Prog-like, GMP-like, ProMono-like, Mono-like]
+  # Maturity threshold: score that best separates immature (HSC/Prog/GMP) from mature (ProMono/Mono/cDC)
+  # normal reference cells (max balanced accuracy). Fixed here, before any drug is looked at.
+  immature_types: [HSC, Prog, GMP]
+  mature_types: [ProMono, Mono, cDC]
+  min_cells_per_patient: 50          # patients below this are reported but flagged
+  offmanifold_quantile: 0.99         # reference leave-one-out kNN distance quantile
+  deconvolution:
+    n_markers_per_type: 50
+    min_mean_cpm: 5
+    # Non-myeloid normal populations included so bulk samples are not forced into malignant types.
+    normal_groups:
+      T_NK: [T, CTL, NK]
+      B: [B, Plasma, ProB]
+      Ery: [earlyEry, lateEry]
+      pDC: [pDC]
+  mature_like_types: [ProMono-like, Mono-like, cDC-like]
+
+phase3:
+  # Wide screen: every compound with a signature in an AML / monocytic line, so positive controls are
+  # ranked against a realistic background, not only against the Beat AML panel.
+  wide_cell_lines: [THP1, HL60, U937, SKM1, NOMO1]
+  wide_max_sigs_per_cell: 3
+  # Lines whose consensus is preferred for scoring; others are used only when a drug lacks these.
+  primary_lines: [THP1, HL60, U937, SKM1, NOMO1]
+  secondary_lines: [CD34, K562]
+  fallback_lines: [MCF7, PC3, A549, A375, HT29, HA1E, VCAP, HEPG2]
+  gene_space: landmark_best_inferred      # sensitivity: landmark
+  connectivity_set_size: 100
+  # Positive controls, fixed before scoring. Tier 1 = canonical inducers of myeloid differentiation
+  # in leukaemia lines (retinoids, vitamin D, PKC activators). Tier 2 = weaker or context-dependent evidence.
+  positive_controls:
+    tier1: [tretinoin, alitretinoin, isotretinoin, tamibarotene, AM-580, TTNPB, calcitriol, ingenol, ingenol-mebutate]
+    tier2: [brequinar, leflunomide, sodium-butyrate, phenylbutyrate, valproic-acid, decitabine, azacitidine,
+            tranylcypromine, enasidenib, ivosidenib, AGI-5198, AGI-6780]
+  n_permutations: 10000
