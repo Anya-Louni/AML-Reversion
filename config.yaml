@@ -1,0 +1,51 @@
+# AML differentiation reversion simulator: pipeline configuration.
+# All paths are relative to the repository root.
+
+seed: 0
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  reports: reports
+  figures: reports/figures
+
+sources:
+  vangalen:
+    # van Galen et al. 2019 Cell, GEO GSE116256 (verified 2026-10-14, 73 MB tar)
+    geo_tar: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE116nnn/GSE116256/suppl/GSE116256_RAW.tar
+  beataml:
+    # Bottomly et al. 2022 Cancer Cell, open processed data, CC-BY-4.0
+    # https://biodev.github.io/BeatAML2/  (files are Git LFS, served via github.com/.../raw/)
+    base_url: https://github.com/biodev/beataml2.0_data/raw/main
+    files:
+      - beataml_waves1to4_sample_mapping.xlsx
+      - beataml_wv1to4_clinical.xlsx
+      - beataml_waves1to4_norm_exp_dbgap.txt
+      - beataml_wes_wv1to4_mutations_dbgap.txt
+      - beataml_probit_curve_fits_v4_dbgap.txt
+      - beataml_drug_families.xlsx
+      - beataml2_manuscript_vg_cts.xlsx
+  lincs:
+    # CMap LINCS 2020 metadata (public S3 used by clue.io)
+    lincs2020_base: https://s3.amazonaws.com/macchiato.clue.io/builds/LINCS2020
+    lincs2020_files: [siginfo_beta.txt, compoundinfo_beta.txt, cellinfo_beta.txt, geneinfo_beta.txt]
+    # SigCom LINCS (Ma'ayan lab): per-signature characteristic-direction TSVs from LINCS 2020
+    sigcom_api: https://maayanlab.cloud/sigcom-lincs/metadata-api
+    sigcom_cp_library: 54198d6e-fe17-5ef8-91ac-02b425761653
+    # GEO GSE92742 / GSE70138 metadata, kept for the census comparison only
+    geo_meta:
+      - https://ftp.ncbi.nlm.nih.gov/geo/series/GSE92nnn/GSE92742/suppl/GSE92742_Broad_LINCS_sig_info.txt.gz
+      - https://ftp.ncbi.nlm.nih.gov/geo/series/GSE70nnn/GSE70138/suppl/GSE70138_Broad_LINCS_sig_info_2017-03-06.txt.gz
+  hgnc:
+    url: https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt
+
+lincs:
+  # Myeloid / leukemia lines preferred for signatures, in order of preference.
+  # K562 is CML (erythroid-leaning), kept as a lower-priority hematopoietic line.
+  myeloid_cell_lines: [HL60, THP1, SKM1, U937, NOMO1, MOLM13, MV411, OCIAML2, OCIAML3, KG1, NB4, CD34, K562]
+  # Extra positive-control compounds downloaded even if absent from Beat AML.
+  positive_controls: [tretinoin, enasidenib, ivosidenib, AGI-5198, AGI-6780, tamibarotene, alitretinoin, calcitriol, decitabine, azacitidine]
+  # Max signatures per (drug, cell line) to download, ranked by quality flags.
+  max_sigs_per_drug_cell: 6
+  # For drugs without any myeloid signature, the core non-myeloid lines to use.
+  fallback_cell_lines: [MCF7, PC3, A549, A375, HT29, HA1E, VCAP, HEPG2]
