@@ -4,6 +4,7 @@ All arrays and tables in this file are MOCK DATA generated for testing only.
 They are never used by the real pipeline.
 """
 import numpy as np
+import scipy.sparse as sp
 import pandas as pd
 import pytest
 
@@ -162,3 +163,55 @@ def test_consensus_excluding_leaves_out_that_line():
     assert list(ex.index) == ["x"] and ex.loc["x", "g1"] == pytest.approx(2.0)
     hl = F2.per_cell_line_signatures(obs, X, g, "HL60")
     assert hl.loc["x", "g1"] == pytest.approx(10.0)
+
+
+# ---------------------------------------------------------------- F3
+from pipeline.exp3 import f3 as F3  # noqa: E402
+
+
+def _cells(n=400, signal=True):
+    """MOCK: treated cells shifted toward higher maturity when signal=True."""
+    y = rng.integers(0, 2, n)
+    score = np.clip(0.4 + (0.25 * y if signal else 0) + rng.normal(0, 0.1, n), 0, 1)
+    return pd.DataFrame({"score": score, "x": rng.normal(size=n), "y": rng.normal(size=n),
+                         "knn_dist": rng.gamma(2, 1, n), "treated": y.astype(bool),
+                         "cell_type": rng.choice(["HSC-like", "Mono-like"], n),
+                         **{m: rng.normal(size=n) for m in F3.MARKERS}})
+
+
+def test_design_expands_cell_type_to_one_hot():
+    df = _cells(50)
+    X = F3.design(df, ["score", "__celltype__"])
+    assert X.shape == (50, 3)                       # score + two cell types
+    assert set(np.unique(X[:, 1:])) <= {0.0, 1.0}
+
+
+def test_fit_eval_detects_signal_and_null():
+    folds = np.arange(400) % 5
+    good = F3.fit_eval(_cells(400, signal=True), ["score"], folds)
+    null = F3.fit_eval(_cells(400, signal=False), ["score"], folds)
+    assert good["auroc"] > 0.8
+    assert 0.35 < null["auroc"] < 0.65
+    assert good["n_folds_scored"] == 5
+
+
+def test_maturity_direction_signs():
+    df = _cells(400, signal=True)
+    out = F3.maturity_direction(df, threshold=0.5)
+    assert out["delta_mean_score"] > 0                      # treated are more mature
+    assert out["delta_stuck_frac"] < 0                      # fewer below the threshold
+    assert out["n_untreated"] + out["n_treated"] == len(df)
+
+
+def test_collapse_duplicate_genes_sums_columns():
+    X = sp.csr_matrix(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
+    out, genes = F3.collapse_duplicate_genes(X, pd.Index(["A", "B", "A"]))
+    assert list(genes) == ["A", "B"]
+    np.testing.assert_allclose(out.toarray(), np.array([[4.0, 2.0], [10.0, 5.0]]))
+
+
+def test_collapse_is_a_no_op_without_duplicates():
+    X = sp.csr_matrix(np.eye(3))
+    out, genes = F3.collapse_duplicate_genes(X, pd.Index(list("abc")))
+    assert list(genes) == list("abc")
+    np.testing.assert_allclose(out.toarray(), np.eye(3))

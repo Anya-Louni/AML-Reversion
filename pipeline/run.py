@@ -13,7 +13,7 @@ PHASES = {0: "pipeline.phase0_data.run", 1: "pipeline.phase1_landscape.run", 2: 
           4: "pipeline.phase4_validation.run", 5: "pipeline.phase5_simulation_export.run",
           "exp2-1": "pipeline.exp2.step1_run", "exp2-3": "pipeline.exp2.step3_run",
           "exp2-4": "pipeline.exp2.step4_run",
-          "exp3-f1": "pipeline.exp3.f1_run", "exp3-f2": "pipeline.exp3.f2_run"}
+          "exp3-f1": "pipeline.exp3.f1_run", "exp3-f2": "pipeline.exp3.f2_run", "exp3-f3": "pipeline.exp3.f3_run"}
 PHASES = {str(k): v for k, v in PHASES.items()}
 
 
