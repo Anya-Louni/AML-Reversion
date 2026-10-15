@@ -7,6 +7,7 @@ requests instead of downloading the whole file.
 """
 from __future__ import annotations
 
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -23,8 +24,20 @@ from pipeline.phase0_data.genes import HGNCMapper, summarize_mapping
 
 log = get_logger("lincs")
 
-LEVEL5_URL = ("https://s3.amazonaws.com/macchiato.clue.io/builds/LINCS2020/level5/"
-              "level5_beta_trt_cp_n720216x12328.gctx")
+_LEVEL5_PATH = "macchiato.clue.io/builds/LINCS2020/level5/level5_beta_trt_cp_n720216x12328.gctx"
+# Same public object on two endpoints; the regional one is tried first because some resolvers time out on
+# the global name.
+LEVEL5_URLS = [f"https://s3.us-east-1.amazonaws.com/{_LEVEL5_PATH}", f"https://s3.amazonaws.com/{_LEVEL5_PATH}"]
+
+
+def reachable_url(urls=LEVEL5_URLS) -> str:
+    for u in urls:
+        try:
+            if requests.head(u, timeout=20).status_code == 200:
+                return u
+        except requests.RequestException:
+            continue
+    raise RuntimeError(f"none of the LINCS Level 5 endpoints is reachable: {urls}")
 SIG_COLS = ["sig_id", "pert_id", "cmap_name", "cell_iname", "pert_idose", "pert_dose", "pert_dose_unit",
             "pert_itime", "pert_time", "nsample", "tas", "cc_q75", "is_hiq", "qc_pass", "is_exemplar_sig",
             "pct_self_rank_q25", "project_code", "pert_type"]
@@ -56,57 +69,78 @@ def select_signatures(sig: pd.DataFrame, drugs: dict[str, str], cells: list[str]
 class RemoteLevel5:
     """Random access to rows of the remote Level 5 matrix."""
 
-    def __init__(self, url: str = LEVEL5_URL, cache_dir: Path | None = None):
-        self.url = url
-        f = fsspec.open(url, "rb", block_size=4 * 2**20).open()
-        self.h5 = h5py.File(f, "r")
-        dset = self.h5["0/DATA/0/matrix"]
-        if dset.chunks is not None or dset.compression is not None:
-            raise RuntimeError("expected a contiguous, uncompressed matrix")
-        self.dtype = dset.dtype
-        self.shape = dset.shape
-        self.offset = dset.id.get_offset()
-        self.row_bytes = self.shape[1] * self.dtype.itemsize
+    def __init__(self, url: str | None = None, cache_dir: Path | None = None):
+        """Opening the remote HDF5 file is slow and can hang on a bad connection, so its layout
+        (byte offset, shape, dtype) and the row/column ids are cached after the first open."""
+        self.urls = [url] if url else list(LEVEL5_URLS)
+        self.url = self.urls[0]
+        self._good = 0
+        self.h5 = None
         cache = cache_dir / "lincs2020_level5_ids.npz" if cache_dir else None
-        if cache is not None and cache.exists():
-            z = np.load(cache, allow_pickle=True)
+        z = np.load(cache, allow_pickle=True) if cache is not None and cache.exists() else None
+        if z is not None and "offset" in z:
             col, row = z["col"], z["row"]
+            self.offset, self.shape, self.dtype = int(z["offset"]), tuple(z["shape"]), np.dtype(str(z["dtype"]))
         else:
-            col = self.h5["0/META/COL/id"][:].astype(str)
-            row = self.h5["0/META/ROW/id"][:].astype(str)
+            dset = self._open()["0/DATA/0/matrix"]
+            if dset.chunks is not None or dset.compression is not None:
+                raise RuntimeError("expected a contiguous, uncompressed matrix")
+            self.dtype, self.shape, self.offset = dset.dtype, dset.shape, dset.id.get_offset()
+            col = z["col"] if z is not None else self.h5["0/META/COL/id"][:].astype(str)
+            row = z["row"] if z is not None else self.h5["0/META/ROW/id"][:].astype(str)
             if cache is not None:
-                np.savez(cache, col=col, row=row)
+                np.savez(cache, col=col, row=row, offset=self.offset, shape=np.array(self.shape), dtype=self.dtype.str)
+        self.row_bytes = self.shape[1] * self.dtype.itemsize
         self.sig_ids = pd.Index(col)
         self.gene_ids = np.array(row)
 
+    def _open(self):
+        if self.h5 is None:
+            self.url = reachable_url(self.urls)
+            f = fsspec.open(self.url, "rb", block_size=4 * 2**20).open()
+            self.h5 = h5py.File(f, "r")
+        return self.h5
+
     def read_h5py(self, i: int) -> np.ndarray:
-        return self.h5["0/DATA/0/matrix"][i, :]
+        return self._open()["0/DATA/0/matrix"][i, :]
 
     def _fetch(self, i: int, session: requests.Session) -> np.ndarray:
         start = self.offset + i * self.row_bytes
         hdr = {"Range": f"bytes={start}-{start + self.row_bytes - 1}"}
-        for attempt in range(5):
+        for attempt in range(14):
+            url = self.urls[self._good % len(self.urls)]
             try:
-                r = session.get(self.url, headers=hdr, timeout=60)
+                r = session.get(url, headers=hdr, timeout=60)
                 r.raise_for_status()
                 if len(r.content) != self.row_bytes:
                     raise IOError("short read")
                 return np.frombuffer(r.content, dtype=self.dtype).astype(np.float32)
             except Exception as e:
-                log.warning("row %d attempt %d: %s", i, attempt + 1, e)
+                if url == self.urls[self._good % len(self.urls)]:
+                    self._good += 1  # switch endpoint; stays on whichever one last worked
+                log.warning("row %d attempt %d: %s", i, attempt + 1, str(e)[:120])
+                time.sleep(min(2 ** attempt, 60))  # back off: transient DNS / connection drops
         raise RuntimeError(f"failed to fetch row {i}")
 
-    def fetch_rows(self, idx: np.ndarray, workers: int = 16) -> np.ndarray:
+    def fetch_rows(self, idx: np.ndarray, workers: int = 16, cache: Path | None = None) -> np.ndarray:
+        """Fetch rows in chunks; with `cache`, finished chunks are saved so an interrupted run resumes."""
         out = np.empty((len(idx), self.shape[1]), dtype=np.float32)
         sessions = [requests.Session() for _ in range(workers)]
+        chunk = 500
+        for s in range(0, len(idx), chunk):
+            part = cache.with_name(f"{cache.stem}_{s}.npy") if cache else None
+            if part is not None and part.exists():
+                out[s:s + chunk] = np.load(part)
+                continue
 
-        def job(k):
-            out[k] = self._fetch(int(idx[k]), sessions[k % workers])
-            if k and k % 500 == 0:
-                log.info("fetched %d / %d rows", k, len(idx))
+            def job(k):
+                out[k] = self._fetch(int(idx[k]), sessions[k % workers])
 
-        with ThreadPoolExecutor(workers) as ex:
-            list(ex.map(job, range(len(idx))))
+            with ThreadPoolExecutor(workers) as ex:
+                list(ex.map(job, range(s, min(s + chunk, len(idx)))))
+            if part is not None:
+                np.save(part, out[s:s + chunk])
+            log.info("fetched %d / %d rows", min(s + chunk, len(idx)), len(idx))
         return out
 
 

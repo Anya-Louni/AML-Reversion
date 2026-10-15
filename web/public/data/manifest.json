@@ -1,0 +1,202 @@
+{
+ "generated": "2026-10-14",
+ "threshold": 0.461,
+ "frames": 30,
+ "alpha_max": 1.0,
+ "like_types": [
+  "HSC-like",
+  "Prog-like",
+  "GMP-like",
+  "ProMono-like",
+  "Mono-like",
+  "cDC-like"
+ ],
+ "quantization": {
+  "x": [
+   -0.03494793161305049,
+   0.032228987635473605
+  ],
+  "y": [
+   -0.013917944978715962,
+   0.012699021205527529
+  ],
+  "score": [
+   0,
+   1
+  ]
+ },
+ "traj_layout": "uint16 little-endian, [frame][cell][x, y, score]",
+ "status_codes": {
+  "0": "already mature",
+  "1": "matured",
+  "2": "resistant",
+  "3": "moved but not past threshold at the end"
+ },
+ "patients": [
+  {
+   "id": "AML916",
+   "n_malignant_d0": 775,
+   "n_shown": 300,
+   "mutations": [
+    "TP53 C238Y"
+   ],
+   "stuck_fraction": 0.9966666666666667,
+   "median_score": 0.025333735921235282,
+   "file": "patients/aml916.json",
+   "top_drug": "AM-580"
+  },
+  {
+   "id": "AML707B",
+   "n_malignant_d0": 1370,
+   "n_shown": 300,
+   "mutations": [
+    "BRCC3 L229fs",
+    "KIT Y823C",
+    "RAD21 L353fs"
+   ],
+   "stuck_fraction": 0.9933333333333333,
+   "median_score": 0.036451773353194036,
+   "file": "patients/aml707b.json",
+   "top_drug": "AM-580"
+  },
+  {
+   "id": "AML420B",
+   "n_malignant_d0": 100,
+   "n_shown": 100,
+   "mutations": [
+    "IDH2 R140Q",
+    "TP53 R273L"
+   ],
+   "stuck_fraction": 0.97,
+   "median_score": 0.039078722176197504,
+   "file": "patients/aml420b.json",
+   "top_drug": "AM-580"
+  },
+  {
+   "id": "AML870",
+   "n_malignant_d0": 314,
+   "n_shown": 300,
+   "mutations": [],
+   "stuck_fraction": 0.9433333333333334,
+   "median_score": 0.030138425534882492,
+   "file": "patients/aml870.json",
+   "top_drug": "MRE-269"
+  },
+  {
+   "id": "AML329",
+   "n_malignant_d0": 253,
+   "n_shown": 253,
+   "mutations": [
+    "FLT3 ITD",
+    "NPM1 W288fs",
+    "SMC3 D1150G"
+   ],
+   "stuck_fraction": 0.8379446640316206,
+   "median_score": 0.15441422682485362,
+   "file": "patients/aml329.json",
+   "top_drug": "Bosutinib (SKI-606)"
+  },
+  {
+   "id": "AML328",
+   "n_malignant_d0": 693,
+   "n_shown": 300,
+   "mutations": [
+    "DNMT3A L637Q",
+    "TP53 P152R",
+    "TP53 Q144P"
+   ],
+   "stuck_fraction": 0.6333333333333333,
+   "median_score": 0.048149769069666046,
+   "file": "patients/aml328.json",
+   "top_drug": "AM-580"
+  },
+  {
+   "id": "AML921A",
+   "n_malignant_d0": 3378,
+   "n_shown": 300,
+   "mutations": [
+    "DNMT3A R882H",
+    "RUNX1 L56S",
+    "SETD2 T1077A"
+   ],
+   "stuck_fraction": 0.6133333333333333,
+   "median_score": 0.2664899887202521,
+   "file": "patients/aml921a.json",
+   "top_drug": "Dasatinib"
+  },
+  {
+   "id": "AML1012",
+   "n_malignant_d0": 856,
+   "n_shown": 300,
+   "mutations": [
+    "KRAS G13D",
+    "NRAS G13D",
+    "SF3A1 G478S"
+   ],
+   "stuck_fraction": 0.56,
+   "median_score": 0.31499018026934,
+   "file": "patients/aml1012.json",
+   "top_drug": "AM-580"
+  },
+  {
+   "id": "AML419A",
+   "n_malignant_d0": 1068,
+   "n_shown": 300,
+   "mutations": [
+    "DNMT3A R882C",
+    "FLT3 A680V",
+    "FLT3 ITD",
+    "FLT3 N841K",
+    "NPM1 W288fs"
+   ],
+   "stuck_fraction": 0.37333333333333335,
+   "median_score": 0.8842491570454929,
+   "file": "patients/aml419a.json",
+   "top_drug": "MRE-269"
+  },
+  {
+   "id": "AML210A",
+   "n_malignant_d0": 464,
+   "n_shown": 300,
+   "mutations": [
+    "DNMT3A R882C",
+    "NPM1 W288fs"
+   ],
+   "stuck_fraction": 0.31,
+   "median_score": 0.7754074143317529,
+   "file": "patients/aml210a.json",
+   "top_drug": "MRE-269"
+  },
+  {
+   "id": "AML475",
+   "n_malignant_d0": 308,
+   "n_shown": 300,
+   "mutations": [
+    "BCOR R976stp",
+    "DNMT3A R882H"
+   ],
+   "stuck_fraction": 0.20333333333333334,
+   "median_score": 0.8173035470559215,
+   "file": "patients/aml475.json",
+   "top_drug": "AM-580"
+  },
+  {
+   "id": "AML556",
+   "n_malignant_d0": 2062,
+   "n_shown": 300,
+   "mutations": [
+    "ATM G2023R",
+    "DNMT3A R882C",
+    "NPM1 W288fs",
+    "NRAS Q61H",
+    "TET2 L1804fs",
+    "TET2 S1059stp"
+   ],
+   "stuck_fraction": 0.03,
+   "median_score": 0.781025517852886,
+   "file": "patients/aml556.json",
+   "top_drug": "MRE-269"
+  }
+ ],
+ "disclaimer": "Research simulation. In-silico hypotheses from a linear expression-shift model. Not for clinical use."
+}

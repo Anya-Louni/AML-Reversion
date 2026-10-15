@@ -63,4 +63,4 @@ def nnls_fractions(bulk: pd.DataFrame, ref: pd.DataFrame) -> pd.DataFrame:
 
 def malignant_shares(frac: pd.DataFrame, like_types) -> pd.DataFrame:
     m = frac[[c for c in like_types if c in frac.columns]]
-    return m.div(m.sum(1).replace(0, np.nan), axis=0)
+    return m.div(m.sum(axis=1).replace(0, np.nan), axis=0)

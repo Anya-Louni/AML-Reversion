@@ -117,3 +117,17 @@ phase3:
     tier2: [brequinar, leflunomide, sodium-butyrate, phenylbutyrate, valproic-acid, decitabine, azacitidine,
             tranylcypromine, enasidenib, ivosidenib, AGI-5198, AGI-6780]
   n_permutations: 10000
+
+phase5:
+  top_n_drugs: 8                  # per patient, from the patient's ranking (AML/monocytic-line signatures, named compounds)
+  always_include: [tretinoin]     # positive control shown for every patient
+  max_cells_per_patient: 300      # random subsample, fixed seed
+  n_frames: 30
+  # x' = x + alpha * s * sd_gene, s = drug consensus z-score; alpha rises linearly 0 -> alpha_max.
+  # alpha_max is a visualization parameter, the same for every drug and patient.
+  alpha_max: 1.0
+  # Every drug's shift is rescaled to one common length, so the animation shows direction (what the
+  # ranking scores), not raw LINCS magnitude. The length is the largest candidate that keeps, on average,
+  # at most max_offmanifold_end of final-frame cells beyond the Phase 2 off-manifold cut.
+  shift_norm_candidates: [2, 3, 4, 5, 6, 8, 10, 12]
+  max_offmanifold_end: 0.2
