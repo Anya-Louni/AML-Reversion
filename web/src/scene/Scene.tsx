@@ -1,12 +1,15 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Bloom, DepthOfField, EffectComposer, Vignette } from "@react-three/postprocessing";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { Landscape, Trajectory } from "../data";
 import { makeWorld, terrainY } from "../data";
 import { Cells, ReferenceDust } from "./Cells";
-import { Terrain } from "./Terrain";
+import { Terrain, type Probe } from "./Terrain";
+
+// Clearance for the side panels, so floating labels never sit underneath them.
+const GUTTER_LEFT = 340, GUTTER_RIGHT = 380;
 
 const LABEL_NAMES: Record<string, [string, string]> = {
   HSC: ["HSC", "stem"], Prog: ["Progenitor", "early"], GMP: ["GMP", "committed"],
@@ -26,9 +29,12 @@ function LabelProjector({ L, host }: { L: Landscape; host: React.RefObject<HTMLD
       const node = el.children[i] as HTMLElement | undefined;
       if (!node) return;
       v.copy(p).project(camera);
-      const visible = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
+      const px = ((v.x + 1) / 2) * size.width;
+      // fade labels that would slide under the side panels rather than letting them clip
+      const clear = px > GUTTER_LEFT && px < size.width - GUTTER_RIGHT;
+      const visible = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && clear;
       node.style.opacity = visible ? "1" : "0";
-      node.style.transform = `translate(${((v.x + 1) / 2) * size.width}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, -100%)`;
+      node.style.transform = `translate(${px}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, -100%)`;
     });
   });
   return null;
@@ -43,6 +49,13 @@ function LabelLayer({ L, host }: { L: Landscape; host: React.RefObject<HTMLDivEl
       })}
     </div>
   );
+}
+
+/** Nearest labelled stage to a maturity score, for the hover readout. */
+function stageOf(score: number, _threshold: number): string {
+  const stops: [number, string][] = [[0.03, "HSC-like"], [0.05, "progenitor"], [0.25, "GMP-like"],
+                                     [0.65, "promonocyte"], [0.9, "monocyte"], [1.01, "mature monocyte"]];
+  return stops.find(([v]) => score <= v)?.[1] ?? "mature";
 }
 
 function Intro({ enabled, onDone }: { enabled: boolean; onDone: () => void }) {
@@ -84,8 +97,24 @@ export interface SceneProps {
 
 export function Scene(p: SceneProps) {
   const labelHost = useRef<HTMLDivElement>(null);
+  const [probe, setProbe] = useState<Probe | null>(null);
+  const stage = probe ? stageOf(probe.score, p.L.threshold) : null;
   return (
     <>
+    {p.showLabels !== false && (
+      <div className={`probe ${probe ? "on" : ""}`} aria-live="polite">
+        {probe ? (
+          <>
+            <b>{probe.score.toFixed(2)}</b>
+            <span>maturity score</span>
+            <i className={probe.score >= p.L.threshold ? "mature" : "stuck"}>
+              {probe.score >= p.L.threshold ? "past threshold" : "below threshold"}
+            </i>
+            <em>{stage}</em>
+          </>
+        ) : <span className="hint-text">hover the landscape to read it</span>}
+      </div>
+    )}
     {p.showLabels !== false && <LabelLayer L={p.L} host={labelHost} />}
     <Canvas
       dpr={[1, 2]}
@@ -95,7 +124,7 @@ export function Scene(p: SceneProps) {
     >
       <fog attach="fog" args={["#07060f", 22, 60]} />
       <Suspense fallback={null}>
-        <Terrain L={p.L} support={p.support} />
+        <Terrain L={p.L} support={p.support} onProbe={setProbe} />
         <ReferenceDust L={p.L} />
         <Cells L={p.L} traj={p.traj} status={p.status} frameRef={p.frameRef} reduced={p.reduced} />
         {p.showLabels !== false && <LabelProjector L={p.L} host={labelHost} />}

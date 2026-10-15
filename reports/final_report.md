@@ -8,7 +8,9 @@ An in-silico hypothesis generator for differentiation therapy research in AML, b
 - Reversion scores (LINCS signatures pointing toward maturity) recover known differentiation agents among 1,691 compounds, but a first pre-registered validation (Phase 4) found no patient-specific value for ex vivo drug response.
 - A ceiling analysis showed that the ex vivo data does contain reproducible patient-specific signal (best achievable per-patient correlation about 0.67).
 - **A second pre-registered experiment with a locked held-out test set (Experiment 2) found modest patient-specific value for a cell-hierarchy model: per-patient Spearman 0.20 (95% CI 0.17 to 0.24), about 30% of the ceiling.** Adding reversion scores gave only a small, suggestive gain.
-- The 3D simulation is a visualization for hypothesis generation, not a prediction.
+- **Experiment 3 tested the simulation against real treated cells for the first time.** It predicts the *direction* of
+  drug-induced change in AML cell lines (beating 1,691 alternatives in 5 of 6 tests) but captures only 8 to 39% of the
+  real movement, is wrong at 4 hours, has never been tested in patient cells, and cannot represent resistance or synergy.
 
 ## 1. Introduction
 
@@ -94,7 +96,83 @@ Full methods and every parameter choice, with justifications, are in the phase r
 - Outcomes vary widely by patient; tretinoin moves a mean of 17% of stuck cells past the threshold.
 - These numbers describe the visualization, not predicted clinical effects.
 
-## 5. Limitations
+## 5. Experiment 3: is the simulation real?
+
+Everything above treats the 3D simulation as a way of generating hypotheses. Experiment 3 asks whether it corresponds
+to anything measured. It was run in four parts, each pre-registered before its analysis, against open transcriptomes of
+AML cells actually treated with these drugs ([data audit](exp3_step0_data.md)).
+
+**The constraint that shapes all of it.** No public dataset treats *patient* AML cells with a drug whose signature we
+hold. Every result below is a cell line or a xenograft, and the transfer to patients remains untested.
+
+### F1: does the predicted direction match reality? ([plan](exp3_f1_plan.md), [results](exp3_f1_results.md))
+
+Six comparisons against measured responses. In **5 of 6** the predicted direction beat almost all of 1,691 alternative
+compounds scored identically (ranks 1, 4, 4, 11 and 37). The eight pre-specified negative controls sat near zero.
+
+But the straight line captures only **8 to 39%** of the variance in what the cells really do, and **95 to 99.9%** of the
+ATRA response is perpendicular to our axis. At 4 hours the prediction points the wrong way entirely (cosine -0.046,
+rank 1338) and the real maturation shift is negative while we predict positive: the early response is not a small
+version of the late one. Our model has no time axis, so it predicts the same change at 4 hours and 4 days.
+
+The maturity score behaves correctly where it matters: for ATRA at 2 d, 4 d and 48 h, real and simulated maturation
+shifts are both positive, and the landscape score rises in the real data.
+
+**Claim constrained:** "predicts the direction of drug-induced expression change in AML cell lines" is supported.
+"Simulates cell reversion" is not.
+
+### F2: can a learned model do better? ([plan](exp3_f2_plan.md), [results](exp3_f2_results.md))
+
+Using the drug's signature from the **matching cell line** beat the consensus on all 4 testable conditions (+0.079
+cosine). All four are the same drug, so this is a lead rather than an established gain, but it points at a concrete fix.
+A map learned from 46 LINCS drugs did **not** generalize (mean -0.037, badly wrong on palbociclib). The linear model stands.
+
+No neural ODE or flow-matching model was fitted, and that was pre-registered: three conditionable drugs and nine
+external conditions cannot support one, and any held-out number would be noise.
+
+**The clearest finding is about time.** Interpolating between the real 4 h and 4 d responses predicts the held-out 2 d
+response at cosine **0.93 against 0.28** for our static prediction, on identical genes. The real path is smooth in
+time; our model simply has no time axis. (This is not a fair contest, since interpolation sees real measurements of
+the same drug; it measures what a time axis would be worth.)
+
+### F3: can we predict which cells resist? ([plan](exp3_f3_plan.md), [results](exp3_f3_results.md))
+
+**The question cannot be asked properly of open data.** Single-cell sequencing destroys the cell it measures, so no
+cell is observed before and after treatment; per-cell resistance is not measurable. We substituted a state-level
+question and labelled it as such.
+
+The pre-registered bar was **not met**. Cell state beat the baselines in the xenograft arm (AUROC 0.76) but that arm
+confounds treatment with sequencing run, so it cannot be read as biology. Across three patients, every model scored
+*below* chance when pooled, meaning a rule learned on two patients actively misleads on the third: nothing transfers.
+
+One result survives the confound: under a menin inhibitor, mean maturity rises **+0.051**, the direction a
+differentiation agent should produce on an axis fixed in Phase 1. Under chemotherapy, maturity does not move
+(-0.015): surviving malignant cells are not more mature, just fewer.
+
+### F4: can we predict combinations? ([plan](exp3_f4_plan.md), [results](exp3_f4_results.md))
+
+Two structural limits first. With a linear model, applying drug A then B is **identical** to summing their shifts, so
+the additive-versus-sequential contrast has no content here. And an additive model **cannot express synergy**, which is
+what makes combinations interesting.
+
+One real combination exists in open data (ATRA + palbociclib, HL-60). Predicting from both drugs beat either alone
+(0.493 against 0.414 and 0.313). Two caveats: an elementwise-max rule scored marginally higher (indistinguishable on
+one combination), and the additive prediction ranks only **3rd** among 1,691 single drugs, so an unrelated compound
+predicts this combination better than we do.
+
+The published ATRA + LSD1-inhibitor pair ranks 102 of 1,428,895 pairs, but this does not validate combination
+prediction: our score is a normalized sum, so pairs rank high exactly when both drugs already point toward maturity,
+and tranylcypromine was already the second-highest single compound in Phase 3.
+
+Beat AML contributes nothing: its "Combination" panel holds 3 single agents, and all 63,395 fits are single-agent.
+
+### What Experiment 3 changes
+
+The simulation is now labelled in the web app with what it has been validated to do. The honest summary is that it
+predicts a *direction* in cell lines, accounts for a minority of real movement, has no time axis, has never been tested
+in patients, and cannot represent resistance or synergy.
+
+## 6. Limitations
 
 - Experiment 2 was designed after the Phase 4 null. Its test patients were already used, with different models, in Phase 4 and the descriptive ceiling analysis. The test set is untouched only with respect to the Experiment 2 models.
 - Ex vivo response is 3-day viability, not maturation; the Beat AML panel has no clinical differentiation agents. Neither validation tests whether drugs induce differentiation.
@@ -103,9 +181,17 @@ Full methods and every parameter choice, with justifications, are in the phase r
 - The web app applies the hierarchy model, trained on bulk-deconvolved Beat AML fractions, to single-cell counts from van Galen patients. This domain shift is untested.
 - The linear expression shift does not model dose, time, toxicity, resistance or cell fate dynamics.
 - Only 12 single-cell patients are available, some with few malignant cells.
+- **The simulation has no time axis**, which Experiment 3 identified as its largest single gap: knowing the time course
+  raises prediction of a held-out timepoint from cosine 0.28 to 0.93.
+- **Resistance and synergy are outside the model.** F3 could not validate resistant-state prediction at all, and an
+  additive combination model cannot express interaction by construction.
+- Every Experiment 3 result is a cell line or xenograft. No open dataset allows the patient test.
 
-## 6. Future work
+## 7. Future work
 
+- A perturbation dataset large enough to fit a time-conditioned dynamics model: Experiment 3 showed the gain is there
+  but that three conditionable drugs cannot support the model.
+- Lineage-barcoded single-cell experiments, which would make per-cell resistance measurable for the first time.
 - Wet-lab testing of top-ranked compounds with differentiation readouts (CD11b, CD14, morphology) rather than viability.
 - Hierarchy models that share strength across drugs or use drug target information.
 - Perturbation response models trained on myeloid cells and longer exposures.

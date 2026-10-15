@@ -1,20 +1,23 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import type { Landscape } from "../data";
-import { makeWorld } from "../data";
+import { makeWorld, sampleGrid } from "../data";
 
 // Height-coloured terrain with contour lines. High = stem-like plateau (deep indigo/violet),
 // low = mature valleys (warm, luminous gold). Lighting is a soft key light plus rim.
 const vert = /* glsl */ `
   attribute float aHeight;
   attribute float aSupport;
+  attribute float aScore;
   varying float vH;
   varying float vSupport;
+  varying float vScore;
   varying vec3 vNormal;
   varying vec3 vWorld;
   void main() {
     vH = aHeight;
     vSupport = aSupport;
+    vScore = aScore;
     vNormal = normalize(normalMatrix * normal);
     vec4 w = modelMatrix * vec4(position, 1.0);
     vWorld = w.xyz;
@@ -27,8 +30,10 @@ const frag = /* glsl */ `
   uniform vec3 uFogColor;
   uniform float uFogNear;
   uniform float uFogFar;
+  uniform float uMaturity;
   varying float vH;
   varying float vSupport;
+  varying float vScore;
   varying vec3 vNormal;
   varying vec3 vWorld;
 
@@ -61,6 +66,12 @@ const frag = /* glsl */ `
     float line = 1.0 - smoothstep(0.0, w * 1.4, abs(fract(lv) - 0.5) - 0.5 + w);
     col = mix(col, col * 1.8 + 0.07, line * 0.6 * vSupport);
 
+    // the maturity threshold, learned on normal marrow: the line cells must cross to count as matured
+    float m = vScore - uMaturity;
+    float mw = fwidth(vScore) * 1.5 + 1e-5;
+    float mline = 1.0 - smoothstep(0.0, mw, abs(m));
+    col = mix(col, vec3(1.0, 0.86, 0.55), mline * 0.55 * vSupport);
+
     // glow in the deepest valleys (bloom picks this up)
     col += base * smoothstep(0.16, 0.0, vH) * 0.22 * vSupport;
     // fade outside data support toward the night rim
@@ -73,7 +84,11 @@ const frag = /* glsl */ `
   }
 `;
 
-export function Terrain({ L, support }: { L: Landscape; support: Float32Array }) {
+export interface Probe { score: number; height: number; x: number; y: number; }
+
+export function Terrain({ L, support, onProbe }: {
+  L: Landscape; support: Float32Array; onProbe?: (p: Probe | null) => void;
+}) {
   const { geometry, material } = useMemo(() => {
     const world = makeWorld(L);
     const n = L.n;
@@ -82,6 +97,8 @@ export function Terrain({ L, support }: { L: Landscape; support: Float32Array })
     const pos = g.attributes.position as THREE.BufferAttribute;
     const hAttr = new Float32Array(n * n);
     const sAttr = new Float32Array(n * n);
+    const scAttr = new Float32Array(n * n);
+    const scoreGrid = L.score ?? [];
     // After rotateX(-pi/2), PlaneGeometry row 0 lies at world z = -D/2. World z = -(y - cy) * s, so
     // row 0 is landscape y max: grid row j = n - 1 - r. Columns run x min -> x max.
     for (let r = 0; r < n; r++) {
@@ -95,20 +112,37 @@ export function Terrain({ L, support }: { L: Landscape; support: Float32Array })
         void sup;
         hAttr[v] = h;
         sAttr[v] = support[j * n + i];
+        scAttr[v] = scoreGrid[j * n + i] ?? 0;
       }
     }
     g.setAttribute("aHeight", new THREE.BufferAttribute(hAttr, 1));
     g.setAttribute("aSupport", new THREE.BufferAttribute(sAttr, 1));
+    g.setAttribute("aScore", new THREE.BufferAttribute(scAttr, 1));
     g.computeVertexNormals();
     const m = new THREE.ShaderMaterial({
       vertexShader: vert, fragmentShader: frag,
       uniforms: {
         uThreshold: { value: L.threshold },
+        uMaturity: { value: L.threshold },
         uFogColor: { value: new THREE.Color("#07060f") },
         uFogNear: { value: 18 }, uFogFar: { value: 46 },
       },
     });
     return { geometry: g, material: m };
   }, [L, support]);
-  return <mesh geometry={geometry} material={material} />;
+  const world = useMemo(() => makeWorld(L), [L]);
+  return (
+    <mesh
+      geometry={geometry}
+      material={material}
+      onPointerMove={(e) => {
+        if (!onProbe) return;
+        e.stopPropagation();
+        const x = world.fromX(e.point.x), y = world.fromY(e.point.z);
+        const inside = x >= L.x[0] && x <= L.x[1] && y >= L.y[0] && y <= L.y[1];
+        onProbe(inside ? { x, y, score: sampleGrid(L, L.score ?? L.height, x, y), height: e.point.y } : null);
+      }}
+      onPointerOut={() => onProbe?.(null)}
+    />
+  );
 }

@@ -261,3 +261,18 @@ def test_all_pair_scores_match_a_direct_computation():
         s = V[i] + V[j]
         assert S[i, j] == pytest.approx((w @ s) / np.linalg.norm(s))
     np.testing.assert_allclose(S, S.T)          # symmetric
+
+
+# ---------------------------------------------------------------- export
+from pipeline.exp3.export import validation_label  # noqa: E402
+
+
+def test_validation_label_reports_the_weakest_and_strongest_capture():
+    f1 = {"n_null_drugs": 1691,
+          "direction": [{"cosine": 0.3, "passes": True}, {"cosine": 0.6, "passes": True},
+                        {"cosine": -0.05, "passes": False}]}
+    out = validation_label(f1, {})
+    assert "2 of 3" in out["detail"]
+    assert "9 to 36%" in out["detail"]           # 0.3^2 and 0.6^2, rounded
+    assert out["level"] == "partial"
+    assert "patient" in out["detail"].lower()    # the limitation is always stated

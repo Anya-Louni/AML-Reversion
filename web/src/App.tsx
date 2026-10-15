@@ -10,8 +10,9 @@ import { HowItWorks } from "./ui/HowItWorks";
 import { DrugPanel, PatientPanel } from "./ui/Panels";
 import { Counters, Timeline } from "./ui/Timeline";
 const ValidationView = lazy(() => import("./ui/ValidationView").then((m) => ({ default: m.ValidationView })));
+const Exp3View = lazy(() => import("./ui/Exp3View").then((m) => ({ default: m.Exp3View })));
 
-type View = "explore" | "compare" | "validation";
+type View = "explore" | "compare" | "validation" | "evidence";
 const SPEEDS = [0.5, 1, 2, 4];
 const BASE_FPS = 6; // simulation frames per second at 1x
 
@@ -144,11 +145,11 @@ export default function App() {
   const cA = counters(trajA, simA?.status);
   return (
     <div className="app">
-      <AnimatePresence>{!ready && (
+      <AnimatePresence>{!ready && view !== "validation" && view !== "evidence" && (
         <motion.div className="loading" exit={{ opacity: 0 }}><div style={{ display: "grid", justifyItems: "center" }}><div className="ring" /><p>Growing the landscape…</p></div></motion.div>
       )}</AnimatePresence>
 
-      {ready && view !== "validation" && (
+      {ready && view !== "validation" && view !== "evidence" && (
         <div className={`stage ${view === "compare" ? "split" : ""}`}>
           {view === "compare"
             ? <>{renderView(trajA, simA?.status ?? null, drugA ?? "")}{renderView(trajB, simB?.status ?? null, drugB ?? "")}</>
@@ -159,8 +160,8 @@ export default function App() {
       <header className="topbar">
         <div className="brand"><h1>Reversion <em>Landscape</em></h1><span>pushing leukaemic cells to mature, in silico</span></div>
         <nav className="nav" aria-label="Views">
-          {(["explore", "compare", "validation"] as View[]).map((v) => (
-            <button key={v} aria-pressed={view === v} onClick={() => { setView(v); if (v === "compare") setPlaying(false); }}>{v[0].toUpperCase() + v.slice(1)}</button>
+          {([["explore", "Explore"], ["compare", "Compare"], ["validation", "Drug ranking"], ["evidence", "Is it real?"]] as [View, string][]).map(([v, label]) => (
+            <button key={v} aria-pressed={view === v} onClick={() => { setView(v); if (v === "compare") setPlaying(false); }}>{label}</button>
           ))}
           <button onClick={() => setHow(true)} aria-label="How it works (H)">How it works</button>
         </nav>
@@ -171,8 +172,14 @@ export default function App() {
         </div>
       </header>
 
-      {ready && view !== "validation" && (
+      {ready && view !== "validation" && view !== "evidence" && (
         <>
+          <div className="vbanner">
+            <b>What the motion is validated to do</b>
+            Predicts the <em>direction</em> of real drug-induced change in AML cell lines (beat 1,691 alternatives in
+            5 of 6 tests), but captures only 8–39% of the real movement, is wrong at 4 hours, and has never been
+            tested in patient cells. See <em>Is it real?</em>
+          </div>
           <PatientPanel patients={manifest!.patients} selected={pid} onSelect={(id) => { setPlaying(false); setPid(id); }} />
           <DrugPanel patient={patient} active={drugA} compare={view === "compare" ? drugB : null} compareMode={view === "compare"} onPick={pickDrug} />
           {view === "explore" && <Counters {...cA} />}
@@ -184,6 +191,7 @@ export default function App() {
 
       <Suspense fallback={<div className="validation"><div className="empty">Loading validation…</div></div>}>
         <AnimatePresence>{view === "validation" && <ValidationView key="val" />}</AnimatePresence>
+        <AnimatePresence>{view === "evidence" && <Exp3View key="exp3" />}</AnimatePresence>
       </Suspense>
       <AnimatePresence>{how && <HowItWorks onClose={() => setHow(false)} />}</AnimatePresence>
 

@@ -1,0 +1,402 @@
+{
+ "f1": {
+  "direction": [
+   {
+    "id": "D1 4h",
+    "drug": "tretinoin",
+    "role": "primary, favourable",
+    "cosine": -0.046413657441010725,
+    "rank": 1338,
+    "n_null": 1691,
+    "passes": false,
+    "variance_explained": 0.00215422759705149
+   },
+   {
+    "id": "D1 2d",
+    "drug": "tretinoin",
+    "role": "primary, favourable",
+    "cosine": 0.2806876776073595,
+    "rank": 4,
+    "n_null": 1691,
+    "passes": true,
+    "variance_explained": 0.078785572360613
+   },
+   {
+    "id": "D1 4d",
+    "drug": "tretinoin",
+    "role": "primary, favourable",
+    "cosine": 0.32255971038703085,
+    "rank": 37,
+    "n_null": 1691,
+    "passes": true,
+    "variance_explained": 0.10404476676496521
+   },
+   {
+    "id": "D2 ATRA 48h",
+    "drug": "tretinoin",
+    "role": "primary, favourable",
+    "cosine": 0.41360091326455967,
+    "rank": 4,
+    "n_null": 1691,
+    "passes": true,
+    "variance_explained": 0.1710657154532778
+   },
+   {
+    "id": "D3 palbociclib 48h",
+    "drug": "Palbociclib",
+    "role": "primary, other class",
+    "cosine": 0.6238294396008714,
+    "rank": 1,
+    "n_null": 1691,
+    "passes": true,
+    "variance_explained": 0.38916316971273734
+   },
+   {
+    "id": "D4 OTX015 16h",
+    "drug": "OTX-015",
+    "role": "secondary, unfavourable",
+    "cosine": 0.31582831169284503,
+    "rank": 11,
+    "n_null": 1691,
+    "passes": true,
+    "variance_explained": 0.09974752246675288
+   }
+  ],
+  "n_pass": 5,
+  "n_total": 6,
+  "trajectory": [
+   {
+    "timepoint": "4h",
+    "n_genes": 1270,
+    "parallel": -0.7898370782709346,
+    "residual_norm": 16.999001311780287,
+    "total_norm": 17.01734080571289,
+    "off_axis_fraction": 0.9989223055386863,
+    "cosine": -0.04641366047072281,
+    "monotone_parallel": true
+   },
+   {
+    "timepoint": "2d",
+    "n_genes": 1257,
+    "parallel": 8.447595725519959,
+    "residual_norm": 28.886181871372656,
+    "total_norm": 30.096069060023076,
+    "off_axis_fraction": 0.9597991622680875,
+    "cosine": 0.2806876774728361,
+    "monotone_parallel": true
+   },
+   {
+    "timepoint": "4d",
+    "n_genes": 1261,
+    "parallel": 14.408976861111308,
+    "residual_norm": 42.283033504745596,
+    "total_norm": 44.670723064115165,
+    "off_axis_fraction": 0.9465491177310348,
+    "cosine": 0.32255970253149135,
+    "monotone_parallel": true
+   }
+  ],
+  "maturity": [
+   {
+    "id": "D1 4h",
+    "drug": "tretinoin",
+    "real_shift": -0.4705215722125592,
+    "sim_shift": 0.4861576557159424,
+    "same_direction": false
+   },
+   {
+    "id": "D1 2d",
+    "drug": "tretinoin",
+    "real_shift": 0.7136548584827795,
+    "sim_shift": 0.4940190613269806,
+    "same_direction": true
+   },
+   {
+    "id": "D1 4d",
+    "drug": "tretinoin",
+    "real_shift": 1.5451635694510009,
+    "sim_shift": 0.5010428428649902,
+    "same_direction": true
+   },
+   {
+    "id": "D2 ATRA 48h",
+    "drug": "tretinoin",
+    "real_shift": 1.5646014823226926,
+    "sim_shift": 0.521433413028717,
+    "same_direction": true
+   },
+   {
+    "id": "D3 palbociclib 48h",
+    "drug": "Palbociclib",
+    "real_shift": 0.4684934772018937,
+    "sim_shift": 0.09302306920289993,
+    "same_direction": true
+   },
+   {
+    "id": "D4 OTX015 16h",
+    "drug": "OTX-015",
+    "real_shift": -0.24956466860964227,
+    "sim_shift": -0.12217973917722702,
+    "same_direction": true
+   }
+  ],
+  "n_sim_genes": 1345,
+  "n_null_drugs": 1691
+ },
+ "f2": {
+  "models": [
+   {
+    "id": "D1 2d",
+    "B0 no change": 0.0,
+    "B1 linear shift": 0.28068767760735946,
+    "B2 mean other drugs": null,
+    "M1 matched cell line": 0.37114678947816476,
+    "M2 learned map": 0.2981387862894538
+   },
+   {
+    "id": "D1 4d",
+    "B0 no change": 0.0,
+    "B1 linear shift": 0.32255974183608216,
+    "B2 mean other drugs": null,
+    "M1 matched cell line": 0.3907329310771683,
+    "M2 learned map": 0.436202760326676
+   },
+   {
+    "id": "D1 4h",
+    "B0 no change": 0.0,
+    "B1 linear shift": -0.04641366192911756,
+    "B2 mean other drugs": null,
+    "M1 matched cell line": 0.08213531595111356,
+    "M2 learned map": -0.05788002905836131
+   },
+   {
+    "id": "D2 ATRA 48h",
+    "B0 no change": 0.0,
+    "B1 linear shift": 0.41360095331119345,
+    "B2 mean other drugs": 0.2480802371459803,
+    "M1 matched cell line": 0.44318029540954573,
+    "M2 learned map": 0.4541224837466466
+   },
+   {
+    "id": "D3 palbociclib 48h",
+    "B0 no change": 0.0,
+    "B1 linear shift": 0.6238294864289279,
+    "B2 mean other drugs": 0.2480802371459803,
+    "M1 matched cell line": null,
+    "M2 learned map": 0.2787550312588113
+   },
+   {
+    "id": "D4 OTX015 16h",
+    "B0 no change": 0.0,
+    "B1 linear shift": 0.3158283598029402,
+    "B2 mean other drugs": 0.2288163396958749,
+    "M1 matched cell line": null,
+    "M2 learned map": null
+   }
+  ],
+  "verdict": {
+   "M1 matched cell line": {
+    "n_conditions": 4,
+    "n_wins": 4,
+    "mean_improvement": 0.0791901552726187,
+    "per_condition": {
+     "D1 2d": 0.0905,
+     "D1 4d": 0.0682,
+     "D1 4h": 0.1285,
+     "D2 ATRA 48h": 0.0296
+    },
+    "beats_linear": true
+   },
+   "M2 learned map": {
+    "n_conditions": 5,
+    "n_wins": 3,
+    "mean_improvement": -0.03698503293824381,
+    "per_condition": {
+     "D1 2d": 0.0175,
+     "D1 4d": 0.1136,
+     "D1 4h": -0.0115,
+     "D2 ATRA 48h": 0.0405,
+     "D3 palbociclib 48h": -0.3451
+    },
+    "beats_linear": false
+   }
+  },
+  "m3": {
+   "M3 time interpolation": {
+    "cosine": 0.9303147600210464,
+    "spearman": 0.8922255491031542,
+    "sim_shift": 0.7322557196649503,
+    "n_genes": 1253
+   },
+   "B1 linear shift": {
+    "cosine": 0.2810982669581549,
+    "spearman": 0.2972818940267905,
+    "sim_shift": 0.5039028525352478,
+    "n_genes": 1253
+   },
+   "B0 no change": {
+    "cosine": 0.0,
+    "n_genes": 1253
+   }
+  },
+  "n_map_training_drugs": 46
+ },
+ "f3": {
+  "verdict": {
+   "A PDX, menin inhibitor 16 h": {
+    "full": 0.7594198587070644,
+    "over_S1": 0.06511556698755205,
+    "over_S2": 0.15206748126234781,
+    "beats_baselines": true
+   },
+   "B van Galen, chemotherapy": {
+    "full": 0.2582836573341484,
+    "over_S1": 0.05609091540941405,
+    "over_S2": -0.02640682810533307,
+    "beats_baselines": false
+   }
+  },
+  "direction": {
+   "A PDX, menin inhibitor 16 h": {
+    "n_untreated": 4522,
+    "n_treated": 2236,
+    "mean_score_untreated": 0.6495253999992084,
+    "mean_score_treated": 0.7005855858655363,
+    "delta_mean_score": 0.05106018586632788,
+    "stuck_frac_untreated": 0.1134453781512605,
+    "stuck_frac_treated": 0.11806797853309481,
+    "delta_stuck_frac": 0.004622600381834305
+   },
+   "B van Galen, chemotherapy": {
+    "n_untreated": 2316,
+    "n_treated": 1814,
+    "mean_score_untreated": 0.17569515995204515,
+    "mean_score_treated": 0.16094126909406714,
+    "delta_mean_score": -0.014753890857978014,
+    "stuck_frac_untreated": 0.8674438687392055,
+    "stuck_frac_treated": 0.8583241455347299,
+    "delta_stuck_frac": -0.009119723204475627
+   }
+  },
+  "overall": false,
+  "cells": {
+   "A PDX, menin inhibitor 16 h": {
+    "untreated": 4522,
+    "treated": 2236
+   },
+   "B van Galen, chemotherapy": {
+    "untreated": 2316,
+    "treated": 1814
+   }
+  }
+ },
+ "f4": {
+  "test0": {
+   "real combination vs real ATRA": 0.7713077876904528,
+   "real combination vs real palbociclib": 0.5946383173445836,
+   "real ATRA vs real palbociclib": 0.2479469719168153
+  },
+  "test1": {
+   "table": [
+    {
+     "prediction": "elementwise max",
+     "cosine": 0.49655098122492564,
+     "n_genes": 1287
+    },
+    {
+     "prediction": "additive",
+     "cosine": 0.49307212896113545,
+     "n_genes": 1287
+    },
+    {
+     "prediction": "palbociclib only",
+     "cosine": 0.41422279943737456,
+     "n_genes": 1287
+    },
+    {
+     "prediction": "ATRA only",
+     "cosine": 0.3133603022058218,
+     "n_genes": 1287
+    }
+   ],
+   "additive_rank_among_single_drugs": 3,
+   "n_single_drugs": 1691,
+   "best_single_drug": "ingenol-mebutate",
+   "best_single_cosine": 0.5444685595829967,
+   "beats_both_singles": true
+  },
+  "test2": {
+   "pair": "tretinoin + tranylcypromine",
+   "score": 0.059995061144713216,
+   "n_pairs": 1428895,
+   "rank": 102,
+   "percentile": 99.99286161684378,
+   "singles": {
+    "tretinoin": 0.34662471884766066,
+    "tranylcypromine": 0.617396912193201
+   }
+  },
+  "top_pairs": [
+   [
+    "BRD-K98404142",
+    "Bosutinib (SKI-606)",
+    0.07234196219440168
+   ],
+   [
+    "Bosutinib (SKI-606)",
+    "tranylcypromine",
+    0.0714265333992911
+   ],
+   [
+    "Bosutinib (SKI-606)",
+    "desmopressin-acetate",
+    0.07094647577991556
+   ],
+   [
+    "methoxsalen",
+    "tranylcypromine",
+    0.07019958239906887
+   ],
+   [
+    "R-428",
+    "tranylcypromine",
+    0.06981748012267736
+   ],
+   [
+    "estrone",
+    "tranylcypromine",
+    0.06972218461447563
+   ],
+   [
+    "desmopressin-acetate",
+    "tranylcypromine",
+    0.06954170917077564
+   ],
+   [
+    "BRD-K98404142",
+    "tranylcypromine",
+    0.06941857114503736
+   ],
+   [
+    "Bosutinib (SKI-606)",
+    "MK-0812",
+    0.0690824386795643
+   ],
+   [
+    "MK-0812",
+    "tranylcypromine",
+    0.06905305056876804
+   ]
+  ],
+  "test3": {
+   "real combination vs real VTP50469": 0.44998449525630074,
+   "real combination vs real OTX015": 0.8322118779324317,
+   "real VTP50469 vs real OTX015": 0.22859351237853867
+  }
+ },
+ "validation_label": {
+  "headline": "Direction validated in cell lines; trajectory not validated",
+  "detail": "Tested against measured drug responses in AML cell lines: the predicted direction of change beat 1,691 alternative drugs in 5 of 6 comparisons, but captures only 8 to 39% of the real movement and is wrong at 4 hours. Never tested in patient cells; no open data allows it.",
+  "level": "partial"
+ }
+}

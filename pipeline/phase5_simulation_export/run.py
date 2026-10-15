@@ -190,7 +190,8 @@ def run(cfg: dict) -> None:
     rx = ref.obsm["X_landscape"][sub]
     cents = pd.read_csv(proc / "landscape_centroids.csv", index_col=0)
     landscape = {"n": int(grid["height"].shape[0]), "x": [xlo, xhi], "y": [ylo, yhi],
-                 "height": r(grid["height"], 3), "support": r(grid["support"], 2), "height_vis": r(display_height(grid), 3), "threshold": thr,
+                 "height": r(grid["height"], 3), "support": r(grid["support"], 2), "height_vis": r(display_height(grid), 3),
+                 "score": r(grid["score"], 2), "threshold": thr,
                  "labels": [{"name": n, "x": float(v.iloc[0]), "y": float(v.iloc[1])} for n, v in cents.iterrows()],
                  "reference": {"x": r(rx[:, 0], 5), "y": r(rx[:, 1], 5), "score": r(ref.obs.score.values[sub], 3),
                                "type": ref.obs.CellType.astype(str).values[sub].tolist()}}

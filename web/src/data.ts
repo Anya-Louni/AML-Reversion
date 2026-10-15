@@ -92,6 +92,34 @@ export const loadLandscape = () => getJSON<Landscape>("landscape.json");
 export const loadPatient = (file: string) => getJSON<PatientDetail>(file);
 export const loadValidation = () => getJSON<Validation>("validation.json");
 export const loadHierarchy = () => getJSON<Hierarchy>("hierarchy.json");
+export const loadExp3 = () => getJSON<Exp3>("exp3.json");
+
+export interface Exp3 {
+  f1: {
+    direction: { id: string; drug: string; role: string; cosine: number; rank: number; n_null: number; passes: boolean; variance_explained: number }[];
+    n_pass: number; n_total: number;
+    trajectory: { timepoint: string; off_axis_fraction: number; parallel: number; cosine: number }[];
+    maturity: { id: string; drug: string; real_shift: number; sim_shift: number; same_direction: boolean }[];
+    n_sim_genes: number; n_null_drugs: number;
+  };
+  f2: {
+    models: Record<string, string | number | null>[];
+    verdict: Record<string, { mean_improvement: number; beats_linear: boolean; n_conditions: number }>;
+    m3: Record<string, { cosine: number | null }>;
+    n_map_training_drugs: number;
+  };
+  f3: { overall: boolean; verdict: Record<string, { full: number; over_S1: number; over_S2: number }>;
+        direction: Record<string, Record<string, number>>; cells: Record<string, { untreated: number; treated: number }> };
+  f4: {
+    test0: Record<string, number>;
+    test1: { table: { prediction: string; cosine: number }[]; beats_both_singles: boolean;
+             additive_rank_among_single_drugs: number; best_single_drug: string; best_single_cosine: number };
+    test2: { pair: string; score: number; rank: number; n_pairs: number; percentile: number };
+    top_pairs: [string, string, number][];
+    test3: Record<string, number>;
+  };
+  validation_label: { headline: string; detail: string; level: string };
+}
 
 export interface Hierarchy {
   cell_types: string[];
@@ -173,5 +201,8 @@ export function makeWorld(L: Landscape) {
     W: sx * s, D: sy * s, HEIGHT: 5.2,
     toX: (x: number) => (x - cx) * s,
     toZ: (y: number) => -(y - cy) * s,
+    // inverse, for turning a pointer hit on the terrain back into landscape coordinates
+    fromX: (wx: number) => wx / s + cx,
+    fromY: (wz: number) => -wz / s + cy,
   };
 }
