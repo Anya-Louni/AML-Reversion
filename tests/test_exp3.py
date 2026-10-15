@@ -110,3 +110,55 @@ def test_trajectory_detects_off_axis_movement():
     perp = perp - u * (perp @ u) / (u @ u)          # orthogonalize
     tr = F.trajectory_test(sim, {"t": u + perp * (np.linalg.norm(u) / np.linalg.norm(perp))}, "d3")
     assert tr.off_axis_fraction.iloc[0] == pytest.approx(np.sqrt(0.5), abs=0.02)
+
+
+# ---------------------------------------------------------------- F2
+from pipeline.exp3 import f2 as F2  # noqa: E402
+
+
+def test_reduced_rank_map_recovers_a_linear_relation():
+    n, p, k = 60, 25, 2
+    Z = rng.normal(size=(n, k))
+    A, B = rng.normal(size=(k, p)), rng.normal(size=(k, p))
+    Xs, Ys = Z @ A, Z @ B                       # MOCK: both sides share a rank-2 latent cause
+    m = F2.ReducedRankMap(rank=k, alpha=0.01).fit(Xs, Ys)
+    pred = m.predict(Xs)
+    cos = [F.cosine(pred[i], Ys[i]) for i in range(n)]
+    assert np.mean(cos) > 0.9
+
+
+def test_reduced_rank_map_predict_shape_for_rank_one():
+    Xs, Ys = rng.normal(size=(30, 12)), rng.normal(size=(30, 12))
+    out = F2.ReducedRankMap(rank=1, alpha=1.0).fit(Xs, Ys).predict(Xs[:3])
+    assert out.shape == (3, 12)
+
+
+def test_select_map_never_sees_excluded_drug():
+    idx = [f"d{i}" for i in range(20)]
+    cols = [f"g{i}" for i in range(8)]
+    Xs = pd.DataFrame(rng.normal(size=(20, 8)), index=idx, columns=cols)
+    Ys = pd.DataFrame(rng.normal(size=(20, 8)), index=idx, columns=cols)
+    Ys.loc["d0"] = 1e6                          # a wild value that would distort any fit that saw it
+    a, _ = F2.select_map(Xs, Ys, [2], [1.0], exclude=["d0"])
+    b, _ = F2.select_map(Xs.drop(index="d0"), Ys.drop(index="d0"), [2], [1.0], exclude=[])
+    assert a["cv_cosine"] == pytest.approx(b["cv_cosine"])
+
+
+def test_time_interpolate_is_linear_and_bracketed():
+    a = pd.Series({"g1": 0.0, "g2": 10.0})
+    b = pd.Series({"g1": 4.0, "g2": 0.0})
+    out = F2.time_interpolate({4.0: a, 96.0: b}, 50.0)
+    w = (50.0 - 4.0) / (96.0 - 4.0)
+    assert out["g1"] == pytest.approx(4.0 * w) and out["g2"] == pytest.approx(10.0 * (1 - w))
+    with pytest.raises(ValueError):
+        F2.time_interpolate({4.0: a, 96.0: b}, 200.0)
+
+
+def test_consensus_excluding_leaves_out_that_line():
+    obs = pd.DataFrame({"drug": ["x", "x", "y"], "cell_iname": ["HL60", "THP1", "HL60"]})
+    X = np.array([[10.0, 10.0], [2.0, 2.0], [5.0, 5.0]])
+    g = ["g1", "g2"]
+    ex = F2.consensus_excluding(obs, X, g, "HL60")
+    assert list(ex.index) == ["x"] and ex.loc["x", "g1"] == pytest.approx(2.0)
+    hl = F2.per_cell_line_signatures(obs, X, g, "HL60")
+    assert hl.loc["x", "g1"] == pytest.approx(10.0)
