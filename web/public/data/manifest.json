@@ -3,6 +3,7 @@
  "threshold": 0.461,
  "frames": 30,
  "alpha_max": 1.0,
+ "shift_norm": 10.0,
  "like_types": [
   "HSC-like",
   "Prog-like",

@@ -195,7 +195,7 @@ def run(cfg: dict) -> None:
                  "reference": {"x": r(rx[:, 0], 5), "y": r(rx[:, 1], 5), "score": r(ref.obs.score.values[sub], 3),
                                "type": ref.obs.CellType.astype(str).values[sub].tolist()}}
     (WEB / "landscape.json").write_text(json.dumps(landscape))
-    manifest = {"generated": dt.date.today().isoformat(), "threshold": thr, "frames": p5["n_frames"], "alpha_max": p5["alpha_max"],
+    manifest = {"generated": dt.date.today().isoformat(), "threshold": thr, "frames": p5["n_frames"], "alpha_max": p5["alpha_max"], "shift_norm": float(target_norm),
                 "like_types": cfg["phase2"]["malignant_like_types"], "quantization": {"x": [xlo, xhi], "y": [ylo, yhi], "score": [0, 1]},
                 "traj_layout": "uint16 little-endian, [frame][cell][x, y, score]",
                 "status_codes": {"0": "already mature", "1": "matured", "2": "resistant", "3": "moved but not past threshold at the end"},
