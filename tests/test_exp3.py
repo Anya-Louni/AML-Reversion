@@ -215,3 +215,49 @@ def test_collapse_is_a_no_op_without_duplicates():
     out, genes = F3.collapse_duplicate_genes(X, pd.Index(list("abc")))
     assert list(genes) == list("abc")
     np.testing.assert_allclose(out.toarray(), np.eye(3))
+
+
+# ---------------------------------------------------------------- F4
+from pipeline.exp3 import f4 as F4  # noqa: E402
+
+
+def test_compose_rules_have_fixed_length():
+    a = pd.Series(rng.normal(size=20), index=GENES[:20])
+    b = pd.Series(rng.normal(size=20), index=GENES[:20])
+    for rule in ["additive", "mean", "elementwise max"]:
+        v = F4.compose(a, b, rule, norm=5.0)
+        assert np.linalg.norm(v.values) == pytest.approx(5.0)
+
+
+def test_additive_and_mean_share_a_direction():
+    a = pd.Series(rng.normal(size=20), index=GENES[:20])
+    b = pd.Series(rng.normal(size=20), index=GENES[:20])
+    add = F4.compose(a, b, "additive", 1.0)
+    mean = F4.compose(a, b, "mean", 1.0)
+    assert F.cosine(add.values, mean.values) == pytest.approx(1.0, abs=1e-9)
+
+
+def test_elementwise_max_takes_the_larger_magnitude():
+    a = pd.Series({"g1": 3.0, "g2": -1.0})
+    b = pd.Series({"g1": -1.0, "g2": 4.0})
+    v = F4.compose(a, b, "elementwise max", norm=1.0)
+    assert v["g1"] > 0 and v["g2"] > 0          # kept +3 from a and +4 from b
+    assert abs(v["g2"]) > abs(v["g1"])
+
+
+def test_signature_weights_sum_to_zero_and_are_signed():
+    sig = pd.DataFrame({"gene": ["a", "b", "c"],
+                        "direction": ["up_with_maturation", "up_with_maturation", "down_with_maturation"]})
+    w = F4.signature_weights(sig, pd.Index(["a", "b", "c", "d"]))
+    assert w["a"] > 0 and w["c"] < 0 and w["d"] == 0
+    assert w.sum() == pytest.approx(0.0)
+
+
+def test_all_pair_scores_match_a_direct_computation():
+    V = rng.normal(size=(12, 30))
+    w = rng.normal(size=30)
+    S = F4.all_pair_maturation_scores(V, w, norm=1.0)
+    for i, j in [(0, 5), (2, 9), (7, 11)]:
+        s = V[i] + V[j]
+        assert S[i, j] == pytest.approx((w @ s) / np.linalg.norm(s))
+    np.testing.assert_allclose(S, S.T)          # symmetric
