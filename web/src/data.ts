@@ -198,7 +198,7 @@ export function makeWorld(L: Landscape) {
   const s = 20 / Math.max(sx, sy);
   const cx = (L.x[0] + L.x[1]) / 2, cy = (L.y[0] + L.y[1]) / 2;
   return {
-    W: sx * s, D: sy * s, HEIGHT: 5.2,
+    W: sx * s, D: sy * s, HEIGHT: 9.0,   // vertical exaggeration, stated in the UI
     toX: (x: number) => (x - cx) * s,
     toZ: (y: number) => -(y - cy) * s,
     // inverse, for turning a pointer hit on the terrain back into landscape coordinates

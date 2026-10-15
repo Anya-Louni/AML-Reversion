@@ -55,10 +55,12 @@ const frag = /* glsl */ `
     vec3 n = normalize(vNormal);
     vec3 L = normalize(vec3(0.75, 0.55, -0.35));
     float diff = clamp(dot(n, L), 0.0, 1.0);
+    float diff2 = clamp(dot(n, normalize(vec3(-0.5, 0.35, 0.6))), 0.0, 1.0);
     float rim = pow(1.0 - clamp(n.y, 0.0, 1.0), 2.0);
     vec3 base = ramp(vH);
     float slope = 1.0 - clamp(n.y, 0.0, 1.0);
-    vec3 col = base * (0.22 + 0.85 * diff) * (1.0 - 0.35 * slope) + rim * vec3(0.18, 0.16, 0.45) * 0.35;
+    vec3 col = base * (0.13 + 1.08 * diff + 0.20 * diff2) * (1.0 - 0.52 * slope)
+             + rim * vec3(0.26, 0.22, 0.62) * 0.55;
 
     // contour lines every 1/18 of height, antialiased with screen-space derivatives
     float lv = vH * 18.0;
@@ -125,7 +127,7 @@ export function Terrain({ L, support, onProbe }: {
         uThreshold: { value: L.threshold },
         uMaturity: { value: L.threshold },
         uFogColor: { value: new THREE.Color("#07060f") },
-        uFogNear: { value: 18 }, uFogFar: { value: 46 },
+        uFogNear: { value: 16 }, uFogFar: { value: 72 },
       },
     });
     return { geometry: g, material: m };

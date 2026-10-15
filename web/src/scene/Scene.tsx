@@ -25,16 +25,21 @@ function LabelProjector({ L, host }: { L: Landscape; host: React.RefObject<HTMLD
   useFrame(({ camera, size }) => {
     const el = host.current;
     if (!el) return;
+    const taken: [number, number][] = [];
     pts.forEach((p, i) => {
       const node = el.children[i] as HTMLElement | undefined;
       if (!node) return;
       v.copy(p).project(camera);
       const px = ((v.x + 1) / 2) * size.width;
+      const py = ((1 - v.y) / 2) * size.height;
       // fade labels that would slide under the side panels rather than letting them clip
       const clear = px > GUTTER_LEFT && px < size.width - GUTTER_RIGHT;
-      const visible = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && clear;
+      // at a raking angle stages project on top of each other; drop the later one
+      const free = !taken.some(([tx, ty]) => Math.abs(tx - px) < 96 && Math.abs(ty - py) < 34);
+      const visible = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && clear && free;
+      if (visible) taken.push([px, py]);
       node.style.opacity = visible ? "1" : "0";
-      node.style.transform = `translate(${px}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, -100%)`;
+      node.style.transform = `translate(${px}px, ${py}px) translate(-50%, -100%)`;
     });
   });
   return null;
@@ -62,10 +67,10 @@ function Intro({ enabled, onDone }: { enabled: boolean; onDone: () => void }) {
   const { camera } = useThree();
   const t0 = useRef<number | null>(null);
   const done = useRef(false);
-  const from = useMemo(() => new THREE.Vector3(26, 20, -18), []);
-  const to = useMemo(() => new THREE.Vector3(3, 10, 15), []);
+  const from = useMemo(() => new THREE.Vector3(24, 13, -16), []);
+  const to = useMemo(() => new THREE.Vector3(2.5, 5.2, 16.5), []);
   useEffect(() => {
-    if (!enabled) { camera.position.copy(to); camera.lookAt(0, 0.8, 0); done.current = true; onDone(); }
+    if (!enabled) { camera.position.copy(to); camera.lookAt(0, 2.1, 0); done.current = true; onDone(); }
   }, [enabled, camera, to, onDone]);
   useFrame((state) => {
     if (done.current) return;
@@ -76,7 +81,7 @@ function Intro({ enabled, onDone }: { enabled: boolean; onDone: () => void }) {
     const p = from.clone().lerp(to, e);
     p.y += Math.sin(e * Math.PI) * 4;
     camera.position.copy(p);
-    camera.lookAt(0, 0.8, 0);
+    camera.lookAt(0, 2.1, 0);
     if (t >= 1) { done.current = true; onDone(); }
   });
   return null;
@@ -115,14 +120,15 @@ export function Scene(p: SceneProps) {
         ) : <span className="hint-text">hover the landscape to read it</span>}
       </div>
     )}
+    {p.showLabels !== false && <div className="scale-note">height = potential, vertically exaggerated for relief</div>}
     {p.showLabels !== false && <LabelLayer L={p.L} host={labelHost} />}
     <Canvas
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
-      camera={{ position: [3, 10, 15], fov: 40, near: 0.1, far: 200 }}
+      camera={{ position: [2.5, 5.2, 16.5], fov: 48, near: 0.1, far: 240 }}
       onCreated={({ gl }) => { gl.setClearColor("#07060f"); gl.toneMapping = THREE.ACESFilmicToneMapping; }}
     >
-      <fog attach="fog" args={["#07060f", 22, 60]} />
+      <fog attach="fog" args={["#07060f", 16, 72]} />
       <Suspense fallback={null}>
         <Terrain L={p.L} support={p.support} onProbe={setProbe} />
         <ReferenceDust L={p.L} />
@@ -133,9 +139,9 @@ export function Scene(p: SceneProps) {
       <OrbitControls
         enabled={!p.intro}
         enableDamping dampingFactor={0.06}
-        autoRotate={!p.reduced && !p.intro} autoRotateSpeed={0.25}
-        minDistance={6} maxDistance={36} maxPolarAngle={Math.PI * 0.46}
-        target={[0, 0.8, 0]}
+        autoRotate={!p.reduced && !p.intro} autoRotateSpeed={0.42}
+        minDistance={7} maxDistance={42} minPolarAngle={Math.PI * 0.12} maxPolarAngle={Math.PI * 0.495}
+        target={[0, 2.1, 0]}
       />
       {p.effects && (
         <EffectComposer multisampling={0}>
