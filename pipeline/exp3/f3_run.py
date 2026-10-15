@@ -213,15 +213,15 @@ def write(cfg, st, res, piv, verdict, overall, direction, importances, sim_link)
       "runs from one animal, so batch and treatment are perfectly confounded. A classifier that good is exactly what a batch effect would produce. "
       "This number is reported for completeness and should not be cited as evidence that resistant states are predictable.")
     w(f"\n**3. The one encouraging result is the maturity shift.** Under the menin inhibitor, mean maturity rises by {da['delta_mean_score']:+.3f} "
-      "— the direction a differentiation-inducing drug should produce, on an axis fixed long before this experiment. It is small, and the batch "
+      ", the direction a differentiation-inducing drug should produce, on an axis fixed long before this experiment. It is small, and the batch "
       f"confound applies here too, but a pure batch effect has no reason to favour this particular direction. The share of cells below the maturity "
       f"threshold barely moves ({da['delta_stuck_frac']:+.3f}), so at 16 h the population shifts without many cells crossing over.")
     w(f"\n**4. Chemotherapy does not mature cells.** In the patient arm, mean maturity changes by {db['delta_mean_score']:+.3f} and the stuck fraction by "
       f"{db['delta_stuck_frac']:+.3f}, both negligible. The malignant cells that survive are not more mature, they are simply fewer. This matches what "
       "F0 predicted from the cell counts and confirms that these samples cannot stand in for differentiation therapy.")
     w("\n**5. Features.** In the PDX arm the strongest single feature is PROM1 (CD133), a stem/progenitor marker, followed by LYZ, a monocytic one, which "
-      "is at least consistent with a stem-to-mature axis separating the two populations. In the patient arm almost every importance is negative — "
-      "shuffling a feature *improves* held-out AUROC — which is what one expects when there is no transferable signal to destroy.")
+      "is at least consistent with a stem-to-mature axis separating the two populations. In the patient arm almost every importance is negative: "
+      "shuffling a feature *improves* held-out AUROC, which is what one expects when there is no transferable signal to destroy.")
     w("\n**Against published biology.** Resistance to menin inhibitors is well documented to involve MEN1 mutations at the drug-binding interface "
       "(PubMed lists dozens of reports). **We cannot test that here:** these data are expression only, with no genotyping of the treated cells, and 16 h "
       "is far too early for an outgrowth of resistant clones. Any claim that our features correspond to that mechanism would be unsupported, so we make none.")
