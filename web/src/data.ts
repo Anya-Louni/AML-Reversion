@@ -91,6 +91,25 @@ export const loadManifest = () => getJSON<Manifest>("manifest.json");
 export const loadLandscape = () => getJSON<Landscape>("landscape.json");
 export const loadPatient = (file: string) => getJSON<PatientDetail>(file);
 export const loadValidation = () => getJSON<Validation>("validation.json");
+export const loadHierarchy = () => getJSON<Hierarchy>("hierarchy.json");
+
+export interface Hierarchy {
+  cell_types: string[];
+  sensitivity: Record<string, number[]>;   // drug -> sensitivity per cell type (minus AUC; higher = more sensitive)
+  drug_means: Record<string, number>;
+  patients: Record<string, { fractions: number[]; ranking: { drug: string; pred_residual: number }[] }>;
+}
+
+export interface Exp2Model { model: string; primary_mean: number; ci_lo: number; ci_hi: number; top5_hit_rate: number; pooled_pearson: number }
+export interface Exp2 {
+  ceiling: { central: number; bias_corrected: number; test_retest: number; variance_model: number; shares: Record<string, number> };
+  primary: { mean: number; ci: [number, number]; p_vs_A: number; supported: boolean; fraction_of_ceiling: Record<string, number> };
+  models: Exp2Model[];
+  secondary: Record<string, { mean_diff: number; p: number }>;
+  n_test_patients: number; n_test_samples: number;
+  phase4_descriptive: { primary_mean: number; ci_lo: number; ci_hi: number };
+  venetoclax_sensitivity: Record<string, number> | null;
+}
 
 export function loadTrajectory(file: string, m: Manifest, cells: number): Promise<Trajectory> {
   const key = `traj:${file}`;
@@ -125,6 +144,7 @@ export interface Validation {
   idh: { drug: string; mutation: string; n_mut: number; n_wt: number; median_sens_mut: number; median_sens_wt: number; p_mut_more_sensitive: number }[];
   venetoclax?: { spearman: number; p: number; n: number };
   generic_hist: { bin: number; count: number }[];
+  exp2?: Exp2;
 }
 
 // ---------------------------------------------------------------- landscape helpers

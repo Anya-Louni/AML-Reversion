@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { HierarchyPanel } from "./HierarchyPanel";
 import type { PatientDetail, PatientSummary, RankedDrug } from "../data";
 
 const HOT = /^(IDH1|IDH2|FLT3|NPM1|TP53)/;
@@ -39,6 +41,7 @@ function scoreBar(v: number, max: number) {
 export function DrugPanel({ patient, active, compare, compareMode, onPick }: {
   patient: PatientDetail | null; active: string | null; compare: string | null; compareMode: boolean; onPick: (d: string) => void;
 }) {
+  const [mode, setMode] = useState<"reversion" | "hierarchy">("reversion");
   if (!patient) return <aside className="panel right"><div className="empty">Select a patient.</div></aside>;
   const simulated = new Set(patient.simulated_drugs.map((d) => d.drug));
   const list: RankedDrug[] = [...patient.ranking];
@@ -46,12 +49,22 @@ export function DrugPanel({ patient, active, compare, compareMode, onPick }: {
     list.push({ drug: s.drug, rank: NaN, cosine: NaN, connectivity: NaN, tier: "AML/monocytic", cells: "", n_sigs: 0, in_beataml_panel: false });
   }
   const max = Math.max(...list.filter((d) => isFinite(d.cosine)).map((d) => Math.abs(d.cosine)), 0.01);
+  const tab = compareMode ? "reversion" : mode;
   return (
     <motion.aside className="panel right" initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.6, delay: 0.4 }} aria-label="Ranked drugs">
       <header>
         <h2>Ranked drugs</h2>
-        <div className="sub">{compareMode ? "Compare: pick two simulated drugs" : `Reversion score for ${patient.id}. Highlighted drugs can be simulated.`}</div>
+        {!compareMode && (
+          <div className="nav" role="tablist" style={{ margin: "6px 0 8px", display: "inline-flex" }}>
+            <button role="tab" aria-pressed={tab === "reversion"} onClick={() => setMode("reversion")}>Reversion</button>
+            <button role="tab" aria-pressed={tab === "hierarchy"} onClick={() => setMode("hierarchy")}>Hierarchy (ex vivo)</button>
+          </div>
+        )}
+        <div className="sub">{compareMode ? "Compare: pick two simulated drugs"
+          : tab === "reversion" ? `Reversion score for ${patient.id}: does the drug's signature point toward maturity? Highlighted drugs can be simulated.`
+          : `Experiment 2 model for ${patient.id}: expected relative ex vivo sensitivity from cell-type composition.`}</div>
       </header>
+      {tab === "hierarchy" ? <HierarchyPanel patient={patient.id} /> : <>
       <div className="scroll">
         {list.map((d) => {
           const can = simulated.has(d.drug);
@@ -77,7 +90,8 @@ export function DrugPanel({ patient, active, compare, compareMode, onPick }: {
           );
         })}
       </div>
-      <div className="hint">Score = cosine between the drug's LINCS signature and this patient's push-to-maturity vector. Lower Beat AML AUC = more sensitive ex vivo (cohort data; these single-cell patients were not in Beat AML).</div>
+      <div className="hint">Score = cosine between the drug's LINCS signature and this patient's push-to-maturity vector: a hypothesis about direction, not a predicted response. Lower Beat AML AUC = more sensitive ex vivo (cohort data; these single-cell patients were not in Beat AML).</div>
+      </>}
     </motion.aside>
   );
 }

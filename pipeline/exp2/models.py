@@ -64,7 +64,7 @@ class PerDrugRidge:
         for d in R.columns:
             X = self._design(F.loc[rows], extra, d)
             y = R.loc[rows, d]
-            ok = y.notna() & X.notna().all(1)
+            ok = y.notna() & X.notna().all(axis=1)
             if ok.sum() < 10:
                 continue
             mu, sd = X[ok].mean(), X[ok].std().replace(0, 1)
@@ -77,7 +77,7 @@ class PerDrugRidge:
         for d, m in self.models.items():
             X = self._design(F.loc[rows], extra, d)
             mu, sd = self.stats[d]
-            ok = X.notna().all(1)
+            ok = X.notna().all(axis=1)
             P.loc[ok[ok].index, d] = m.predict(((X[ok] - mu) / sd).values)
         return P
 

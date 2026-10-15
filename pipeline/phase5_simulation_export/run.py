@@ -202,7 +202,14 @@ def run(cfg: dict) -> None:
                 "patients": sorted(patients, key=lambda d: -d["stuck_fraction"]),
                 "disclaimer": "Research simulation. In-silico hypotheses from a linear expression-shift model. Not for clinical use."}
     (WEB / "manifest.json").write_text(json.dumps(manifest, indent=1))
-    (WEB / "validation.json").write_text(json.dumps(clean_nan(validation_export(proc, seed)), allow_nan=False))
+    val = validation_export(proc, seed)
+    # Experiment 2 (pre-registered locked-test validation) and hierarchy-based rankings, if available
+    if (proc / "exp2_test_results.json").exists():
+        from pipeline.exp2.export import validation_payload, web_payload
+        val["exp2"] = validation_payload(cfg)
+        hier = web_payload(cfg, vg.obs, [p["id"] for p in patients])
+        (WEB / "hierarchy.json").write_text(json.dumps(clean_nan(hier), allow_nan=False))
+    (WEB / "validation.json").write_text(json.dumps(clean_nan(val), allow_nan=False))
     sims = pd.DataFrame(sim_rows)
     sims.to_csv(proc / "phase5_simulation_summary.csv", index=False)
     size = sum(f.stat().st_size for f in WEB.rglob("*") if f.is_file())

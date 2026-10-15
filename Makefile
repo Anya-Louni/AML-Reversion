@@ -1,6 +1,6 @@
 PY ?= .venv/Scripts/python.exe
 
-.PHONY: all phase0 phase1 phase2 phase3 phase4 phase5 web test clean-processed
+.PHONY: all phase0 phase1 phase2 phase3 phase4 phase5 exp2 web test clean-processed
 
 all: phase0 phase1 phase2 phase3 phase4 phase5 web
 
@@ -21,6 +21,10 @@ phase4:
 
 phase5:
 	$(PY) -m pipeline.run --phase 5
+
+exp2:
+	$(PY) -m pipeline.run --phase exp2-1
+	$(PY) -m pipeline.run --phase exp2-3
 
 web:
 	cd web && npm ci && npm run build

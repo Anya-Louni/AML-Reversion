@@ -1,6 +1,6 @@
 # Phase 5: simulation export
 
-Generated 2026-10-14 by `python -m pipeline.run --phase 5`.
+Generated 2026-10-15 by `python -m pipeline.run --phase 5`.
 
 > **What the motion means.** Cells move because their log expression is shifted linearly along a drug's LINCS consensus signature: x' = x + alpha * v, where v is the drug's z-score per gene (landmark and best-inferred genes only) times the gene's SD in the normal reference, rescaled to a common length for every drug (see caveats), and alpha rises linearly from 0 to 1.0 over 30 frames. Each frame is placed with the fixed Phase 1 map. This is a visualization of a hypothesis. It is not a model of cell fate, dose, time, toxicity or resistance mechanisms.
 
@@ -9,7 +9,7 @@ Generated 2026-10-14 by `python -m pipeline.run --phase 5`.
 - Patients: the 12 van Galen patients with malignant cells at diagnosis; up to 300 cells each (random subsample with the fixed seed; all cells if fewer).
 - Drugs per patient: the top 8 named compounds in that patient's Phase 3 ranking whose signature comes from AML/monocytic lines, plus tretinoin as a reference positive control.
 - Maturity threshold: 0.461 (Phase 2). A cell that starts below it is **matured** if it ends above it, **resistant** if it never crosses it, and **transient** if it crosses and falls back.
-- Export: `web/public/data/`, 6.2 MB in total. Trajectories are uint16-quantized (x, y, score) per frame per cell.
+- Export: `web/public/data/`, 6.3 MB in total. Trajectories are uint16-quantized (x, y, score) per frame per cell.
 
 ## Outcomes
 

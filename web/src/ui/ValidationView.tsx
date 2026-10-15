@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Bar, BarChart, CartesianGrid, Cell, ErrorBar, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
 } from "recharts";
-import { loadValidation, type Validation } from "../data";
+import { loadValidation, type Exp2, type Validation } from "../data";
 
 const f3 = (x: unknown) => (typeof x === "number" ? x.toFixed(3) : String(x));
 const pct = (x: unknown) => (typeof x === "number" ? `${x.toFixed(1)} percentile` : String(x));
@@ -28,6 +28,11 @@ export function ValidationView() {
   return (
     <motion.div className="validation" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ duration: 0.5 }}>
       <div className="v-grid">
+        {v.exp2 && <Exp2Section e={v.exp2} tip={tip} />}
+        <div className="card span-12" style={{ borderStyle: "dashed" }}>
+          <h3>Initial analysis: Phase 4 (first pre-registered test)</h3>
+          <div className="sub">Reported in full. Its null result for patient-specific value motivated the ceiling analysis and Experiment 2 above.</div>
+        </div>
         <div className="card span-12">
           <h3>Does the reversion score predict real patients' drug response?</h3>
           <div className="sub">Beat AML ex vivo sensitivity, pre-registered analysis, patient-level 5-fold cross-validation.</div>
@@ -151,5 +156,67 @@ export function ValidationView() {
         )}
       </div>
     </motion.div>
+  );
+}
+
+function Exp2Section({ e, tip }: { e: Exp2; tip: Record<string, unknown> }) {
+  const names: Record<string, string> = {
+    "A global ranking": "A global ranking", "B mutation + clinical": "B mutation + clinical", "H hierarchy (PRIMARY)": "H hierarchy (primary)",
+    "HR hierarchy + reversion": "HR + reversion", "HM hierarchy + myeloid-line reversion": "HM + myeloid reversion",
+  };
+  const data = e.models.map((m) => ({ name: names[m.model] ?? m.model, v: m.primary_mean, err: [m.primary_mean - m.ci_lo, m.ci_hi - m.primary_mean], primary: m.model.startsWith("H hierarchy") }));
+  const pr = e.primary;
+  return (
+    <>
+      <div className="card span-12">
+        <h3>Experiment 2: can drugs be ranked for an individual patient?</h3>
+        <div className="sub">Pre-registered, with a locked test set: Beat AML patients from the later data waves (3 and 4), never used for fitting. Evaluated once.</div>
+        <div className="kpi">
+          <div><div className="v">{pr.mean.toFixed(2)}</div><div className="k">per-patient Spearman (95% CI {pr.ci[0].toFixed(2)} to {pr.ci[1].toFixed(2)})</div></div>
+          <div><div className="v">{fmtP(pr.p_vs_A)}</div><div className="k">p vs global ranking</div></div>
+          <div><div className="v">{Math.round(pr.fraction_of_ceiling["pre-specified"] * 100)}%</div><div className="k">of the estimated ceiling ({e.ceiling.central.toFixed(2)})</div></div>
+          <div><div className="v">{e.n_test_patients}</div><div className="k">test patients</div></div>
+        </div>
+        <div className="verdict">
+          <b>Modest, but real.</b> The primary model (cell-type composition x learned per-cell-type drug sensitivity) ranks a patient's drugs better than
+          the global ranking on held-out patients, reaching about {Math.round(pr.fraction_of_ceiling["pre-specified"] * 100)}% of what the data's noise allows.
+          Adding reversion scores gives only a small, suggestive gain that does not survive correction for multiple tests. The readout is 3-day viability, not differentiation.
+        </div>
+      </div>
+      <div className="card span-7">
+        <h3>Held-out test set, all models</h3>
+        <div className="sub">Mean per-patient Spearman between predicted and observed relative response, 95% bootstrap CI.</div>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={data} layout="vertical" margin={{ left: 30, right: 20 }}>
+            <CartesianGrid horizontal={false} />
+            <XAxis type="number" domain={[0, "auto"]} tickFormatter={(x) => x.toFixed(2)} />
+            <YAxis type="category" dataKey="name" width={160} interval={0} />
+            <ReferenceLine x={e.ceiling.central} stroke="#7fe7ff" strokeDasharray="4 3" label={{ value: "ceiling", fill: "#7fe7ff", fontSize: 10, position: "top" }} />
+            <Tooltip {...tip} formatter={f3} />
+            <Bar dataKey="v" radius={[0, 4, 4, 0]}>
+              {data.map((d) => <Cell key={d.name} fill={d.primary ? "#ffc46b" : "#6f62e8"} />)}
+              <ErrorBar dataKey="err" width={4} stroke="#ece9fb" direction="x" />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="card span-5">
+        <h3>How much signal is there?</h3>
+        <div className="sub">Ceiling analysis from technical replicates in the raw dose-response data.</div>
+        <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+          <tbody>
+            {[["Drug effect", e.ceiling.shares.drug], ["Patient effect", e.ceiling.shares.patient], ["Drug x patient (target)", e.ceiling.shares.residual]].map(([k, val]) => (
+              <tr key={k as string} style={{ borderTop: "1px solid rgba(190,180,255,.12)" }}><td>{k}</td><td style={{ textAlign: "right" }}>{Math.round((val as number) * 100)}% of variance</td></tr>
+            ))}
+            <tr style={{ borderTop: "1px solid rgba(190,180,255,.12)" }}><td>Ceiling (pre-specified / bias-corrected)</td><td style={{ textAlign: "right" }}>{e.ceiling.central.toFixed(2)} / {e.ceiling.bias_corrected.toFixed(2)}</td></tr>
+            <tr style={{ borderTop: "1px solid rgba(190,180,255,.12)" }}><td>Range of noise estimates</td><td style={{ textAlign: "right" }}>{e.ceiling.test_retest.toFixed(2)} to {e.ceiling.variance_model.toFixed(2)}</td></tr>
+            <tr style={{ borderTop: "1px solid rgba(190,180,255,.12)" }}><td>Raw reversion score on the same test</td><td style={{ textAlign: "right" }}>{e.phase4_descriptive.primary_mean.toFixed(3)}</td></tr>
+          </tbody>
+        </table>
+        {e.venetoclax_sensitivity && (
+          <div className="verdict">Biology check: the learned venetoclax sensitivity is higher in stem/progenitor-like than monocyte-like cells, as expected from published work.</div>
+        )}
+      </div>
+    </>
   );
 }
