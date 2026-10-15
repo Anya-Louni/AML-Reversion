@@ -52,6 +52,13 @@ Model A predicts a constant, so its per-patient Spearman is defined as 0 and its
 
 The learned sensitivities (sensitivity(k, d), drugs x cell types) will be shown as a heatmap. Expected from prior work: venetoclax more effective (higher sensitivity) in stem/progenitor-like cells than in monocyte-like cells (Pei et al. 2020).
 
+## Amendment 1 (2026-10-15, committed before any Experiment 2 model was fitted)
+
+Two secondary analyses are added. Neither changes the primary model, metric, test or decision rule.
+
+1. **Excluding low-signal samples.** All metrics and the H vs A comparison are repeated after removing the 74 samples defined in Step 1 as having total residual variance below the single-curve measurement noise variance (775.3 AUC units squared, residuals from the additive fit on the full Phase 4 matrix). The exact list is fixed in `reports/exp2_low_signal_samples.csv` (59 development, 15 test samples). It is excluded from development fitting and test scoring in this secondary analysis only. Disclosure: the list was derived from response data of all samples, including test samples, in the descriptive Step 1 analysis; it uses no model and no tuning, but it is not independent of test responses, so this analysis is secondary.
+2. **Descriptive Phase 4 residual correlation.** The Phase 4 raw reversion score (Phase 3 cosine, model M1 in Phase 4, no fitting) is scored on the test set with the Experiment 2 target and primary metric (per-patient Spearman with development-mean residuals, bootstrap CI). It is reported descriptively, without a hypothesis test, so the earlier score can be read on the same scale as the new models.
+
 ## Caveat
 
 Ex vivo response is a 3-day viability readout. Experiment 2 asks whether patient-specific viability response can be predicted; it does not test whether drugs induce differentiation.
